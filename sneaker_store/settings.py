@@ -4,10 +4,10 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-sneaker-store-key")
-DEBUG = os.environ.get("DEBUG", "1") == "1"
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.environ.get(
-    "djangoproject-production-0188.up.railway.app",
     "ALLOWED_HOSTS",
+    "djangoproject-production-0188.up.railway.app",
     "localhost,127.0.0.1,0.0.0.0",
 ).split(",")
 
@@ -63,6 +63,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://djangoproject-production-0188.up.railway.app',
 ]
 
 LANGUAGE_CODE = "ru-ru"
