@@ -1,0 +1,114 @@
+{% extends "sneakers/base.html" %}
+{% load static %}
+
+{% block title %}3D Sneaker Store - магазин кроссовок{% endblock %}
+
+{% block content %}
+<section class="hero" id="viewer">
+    <div class="hero-copy">
+        <p class="eyebrow">Django + Three.js</p>
+        <h1>3D Sneaker Store</h1>
+        <p class="lead">
+            Магазин кроссовок с интерактивным просмотром модели: вращайте пару,
+            приближайте детали и выбирайте размер без лишних переходов.
+        </p>
+        <div class="hero-actions">
+            <a class="button primary" href="#catalog">Смотреть каталог</a>
+            <a class="button secondary" href="{{ featured.get_absolute_url }}">Открыть модель</a>
+        </div>
+    </div>
+    <div class="hero-viewer">
+        <div
+            class="sneaker-viewer"
+            data-model-path="{{ featured_model_url }}"
+            data-accent="{{ featured.accent_color }}"
+            data-label="{{ featured.brand }} {{ featured.name }}"
+            aria-label="3D модель {{ featured.brand }} {{ featured.name }}"
+        >
+            <div class="viewer-status">Загрузка 3D модели...</div>
+        </div>
+    </div>
+</section>
+
+<section class="section catalog-section" id="catalog">
+    <div class="section-heading">
+        <p class="eyebrow">Каталог</p>
+        <h2>Популярные пары</h2>
+    </div>
+
+    <div class="product-grid">
+        {% for sneaker in sneakers %}
+            <article class="product-card" style="--accent: {{ sneaker.accent_color }}">
+                <a class="product-visual" href="{{ sneaker.get_absolute_url }}" aria-label="{{ sneaker.brand }} {{ sneaker.name }}">
+                    <span class="sole"></span>
+                    <span class="shoe-body"></span>
+                    <span class="shoe-top"></span>
+                </a>
+                <div class="product-meta">
+                    <div>
+                        <p class="category">{{ sneaker.category }}</p>
+                        <h3>{{ sneaker.brand }} {{ sneaker.name }}</h3>
+                    </div>
+                    <p class="price">
+                        {{ sneaker.price|floatformat:0 }} ₽
+                        {% if sneaker.old_price %}
+                            <span>{{ sneaker.old_price|floatformat:0 }} ₽</span>
+                        {% endif %}
+                    </p>
+                    <p>{{ sneaker.short_description }}</p>
+                    {% if sneaker.id %}
+                        <div class="product-actions">
+                            {% if request.user.is_authenticated %}
+                                <form method="post" action="{% url 'sneakers:cart_add' sneaker.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button class="button primary compact" type="submit">В корзину</button>
+                                </form>
+                                <form method="post" action="{% url 'sneakers:favorite_toggle' sneaker.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button class="button secondary compact" type="submit">
+                                        {% if sneaker.id in favorite_ids %}В избранном{% else %}В избранное{% endif %}
+                                    </button>
+                                </form>
+                            {% else %}
+                                <a class="button primary compact" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">В корзину</a>
+                                <a class="button secondary compact" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">В избранное</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="card-footer">
+                        <span>{{ sneaker.colorway }}</span>
+                        <a class="icon-link" href="{{ sneaker.get_absolute_url }}" aria-label="Открыть товар">→</a>
+                    </div>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section info-band" id="delivery">
+    <div>
+        <p class="eyebrow">Сервис</p>
+        <h2>Примерка по деталям</h2>
+    </div>
+    <div class="info-grid">
+        <div>
+            <strong>3D обзор</strong>
+            <p>GLTF-модель загружается из Django static и управляется через OrbitControls.</p>
+        </div>
+        <div>
+            <strong>Быстрый выбор</strong>
+            <p>Размеры, цена, цвет и описание доступны сразу на странице товара.</p>
+        </div>
+        <div>
+            <strong>Готово к расширению</strong>
+            <p>Каталог можно вести через Django admin и подключать разные модели для товаров.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'sneakers/js/viewer.js' %}"></script>
+{% endblock %}
