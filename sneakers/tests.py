@@ -1,3 +1,8 @@
+import os
+from io import StringIO
+from unittest.mock import patch
+
+from django.core.management import call_command
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -177,3 +182,33 @@ class AccountShoppingTests(TestCase):
         response = self.client.get(reverse("sneakers:favorites"))
 
         self.assertContains(response, self.sneaker.name)
+
+
+class EnsureSuperuserCommandTests(TestCase):
+    def test_command_skips_without_credentials(self):
+        out = StringIO()
+
+        with patch.dict(os.environ, {}, clear=True):
+            call_command("ensure_superuser", stdout=out)
+
+        self.assertIn("Superuser creation skipped", out.getvalue())
+        self.assertFalse(get_user_model().objects.filter(is_superuser=True).exists())
+
+    def test_command_creates_superuser_from_environment(self):
+        out = StringIO()
+
+        with patch.dict(
+            os.environ,
+            {
+                "DJANGO_SUPERUSER_USERNAME": "admin",
+                "DJANGO_SUPERUSER_EMAIL": "admin@example.com",
+                "DJANGO_SUPERUSER_PASSWORD": "StrongAdminPass123",
+            },
+            clear=True,
+        ):
+            call_command("ensure_superuser", stdout=out)
+
+        user = get_user_model().objects.get(username="admin")
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.check_password("StrongAdminPass123"))

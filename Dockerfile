@@ -16,4 +16,4 @@ RUN mkdir -p /app/staticfiles /app/static && \
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn sneaker_store.wsgi:application --bind 0.0.0.0:${PORT:-8080}"]
+CMD ["sh", "-c", "python manage.py migrate && python manage.py ensure_superuser && python manage.py collectstatic --noinput && gunicorn sneaker_store.wsgi:application --bind 0.0.0.0:${PORT:-8080}"]
