@@ -258,6 +258,13 @@ p {
         var(--surface-2);
 }
 
+.product-visual img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .sole,
 .shoe-body,
 .shoe-top {
@@ -797,7 +804,7 @@ p {
 
 .management-row {
     display: grid;
-    grid-template-columns: minmax(230px, 1fr) 150px 120px 100px 220px;
+    grid-template-columns: minmax(230px, 1fr) 140px 110px 120px 90px 220px;
     align-items: center;
     gap: 14px;
     padding: 14px 16px;

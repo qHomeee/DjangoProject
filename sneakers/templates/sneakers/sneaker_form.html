@@ -13,7 +13,7 @@
         </p>
     </div>
 
-    <form class="site-form product-form" method="post">
+    <form class="site-form product-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         {% if form.non_field_errors %}

@@ -29,7 +29,7 @@ def home(request):
         {
             "sneakers": sneakers,
             "featured": featured,
-            "featured_model_url": _static_model_url(featured.model_path),
+            "featured_model_url": _model_url(featured),
             "favorite_ids": favorite_ids,
         },
     )
@@ -50,14 +50,17 @@ def sneaker_detail(request, slug):
         {
             "sneaker": sneaker,
             "related": related,
-            "model_url": _static_model_url(sneaker.model_path),
+            "model_url": _model_url(sneaker),
             "favorite_ids": _favorite_ids(request),
         },
     )
 
 
-def _static_model_url(model_path):
-    return static(model_path.replace("\\", "/"))
+def _model_url(sneaker):
+    model_file = getattr(sneaker, "model_file", None)
+    if model_file:
+        return model_file.url
+    return static(sneaker.model_path.replace("\\", "/"))
 
 
 def register(request):
@@ -144,7 +147,7 @@ def sneaker_create(request):
     _require_manager(request.user)
 
     if request.method == "POST":
-        form = SneakerForm(request.POST)
+        form = SneakerForm(request.POST, request.FILES)
         if form.is_valid():
             sneaker = form.save()
             messages.success(request, "Кроссовки добавлены в каталог.")
@@ -175,7 +178,7 @@ def sneaker_update(request, pk):
     sneaker = get_object_or_404(Sneaker, pk=pk)
 
     if request.method == "POST":
-        form = SneakerForm(request.POST, instance=sneaker)
+        form = SneakerForm(request.POST, request.FILES, instance=sneaker)
         if form.is_valid():
             sneaker = form.save()
             messages.success(request, "Карточка кроссовок обновлена.")

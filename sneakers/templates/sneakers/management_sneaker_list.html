@@ -28,6 +28,7 @@
             <span>Товар</span>
             <span>Категория</span>
             <span>Цена</span>
+            <span>Медиа</span>
             <span>Избранное</span>
             <span>Действия</span>
         </div>
@@ -39,6 +40,10 @@
                 </a>
                 <span>{{ sneaker.category }}</span>
                 <span>{{ sneaker.price|floatformat:0 }} ₽</span>
+                <span>
+                    {% if sneaker.image %}Фото{% else %}Без фото{% endif %} ·
+                    {% if sneaker.model_file %}Файл{% else %}Static{% endif %}
+                </span>
                 <span>{{ sneaker.favorites_total }}</span>
                 <div class="row-actions">
                     <a class="button secondary compact" href="{% url 'sneakers:edit' sneaker.id %}">Редактировать</a>

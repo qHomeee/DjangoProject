@@ -1,6 +1,17 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.urls import reverse
+
+
+def sneaker_image_upload_to(instance, filename):
+    slug = instance.slug or "unassigned"
+    return f"sneakers/images/{slug}/{filename}"
+
+
+def sneaker_model_upload_to(instance, filename):
+    slug = instance.slug or "unassigned"
+    return f"sneakers/models/{slug}/{filename}"
 
 
 class Sneaker(models.Model):
@@ -20,12 +31,28 @@ class Sneaker(models.Model):
     accent_color = models.CharField("Акцентный цвет", max_length=7, default="#0ea5e9")
     short_description = models.CharField("Краткое описание", max_length=220)
     description = models.TextField("Описание")
+    image = models.ImageField(
+        "Картинка для каталога",
+        upload_to=sneaker_image_upload_to,
+        blank=True,
+        null=True,
+        help_text="Фото кроссовок для карточки в каталоге.",
+    )
     sizes = models.JSONField("Размеры", default=list)
+    model_file = models.FileField(
+        "Файл 3D модели",
+        upload_to=sneaker_model_upload_to,
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(["glb"])],
+        help_text="Загрузите .glb файл. Этот формат хранит модель и текстуры в одном файле.",
+    )
     model_path = models.CharField(
         "Путь к 3D модели в static",
         max_length=220,
+        blank=True,
         default="sneakers/models/scene.gltf",
-        help_text="Например: sneakers/models/scene.gltf",
+        help_text="Запасной вариант для моделей, которые уже лежат в static. Например: sneakers/models/scene.gltf",
     )
     is_featured = models.BooleanField("На главной", default=False)
     created_at = models.DateTimeField("Создано", auto_now_add=True)

@@ -38,7 +38,9 @@ class SneakerForm(forms.ModelForm):
             "accent_color",
             "short_description",
             "description",
+            "image",
             "sizes_text",
+            "model_file",
             "model_path",
             "is_featured",
         ]
@@ -83,6 +85,22 @@ class SneakerForm(forms.ModelForm):
 
     def clean_model_path(self):
         return self.cleaned_data["model_path"].replace("\\", "/").strip()
+
+    def clean_model_file(self):
+        model_file = self.cleaned_data.get("model_file")
+        if model_file and not model_file.name.lower().endswith(".glb"):
+            raise forms.ValidationError("Для загрузки через сайт используйте файл .glb.")
+        return model_file
+
+    def clean(self):
+        cleaned_data = super().clean()
+        model_file = cleaned_data.get("model_file") or getattr(self.instance, "model_file", None)
+        model_path = cleaned_data.get("model_path")
+        if not model_file and not model_path:
+            raise forms.ValidationError(
+                "Загрузите .glb модель или укажите путь к модели в static."
+            )
+        return cleaned_data
 
     def save(self, commit=True):
         sneaker = super().save(commit=False)

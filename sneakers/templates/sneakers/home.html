@@ -40,9 +40,13 @@
         {% for sneaker in sneakers %}
             <article class="product-card" style="--accent: {{ sneaker.accent_color }}">
                 <a class="product-visual" href="{{ sneaker.get_absolute_url }}" aria-label="{{ sneaker.brand }} {{ sneaker.name }}">
-                    <span class="sole"></span>
-                    <span class="shoe-body"></span>
-                    <span class="shoe-top"></span>
+                    {% if sneaker.image %}
+                        <img src="{{ sneaker.image.url }}" alt="{{ sneaker.brand }} {{ sneaker.name }}">
+                    {% else %}
+                        <span class="sole"></span>
+                        <span class="shoe-body"></span>
+                        <span class="shoe-top"></span>
+                    {% endif %}
                 </a>
                 <div class="product-meta">
                     <div>
