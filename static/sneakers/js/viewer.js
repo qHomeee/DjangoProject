@@ -121,31 +121,32 @@ function loadModel(modelPath, scene, status, accent) {
 
 function normalizeModel(model) {
     const floorY = -0.42;
-    const box = new THREE.Box3().setFromObject(model);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
     const targetWidth = 2.35;
     const targetHeight = 1.05;
     const targetDepth = 1.25;
+
+    model.position.set(0, 0, 0);
+    model.rotation.y = Math.PI * 0.82;
+    model.scale.setScalar(1);
+    model.updateMatrixWorld(true);
+
+    const rawMetrics = getVisualMetrics(model);
+    const size = rawMetrics.size;
     const scale = Math.min(
         targetWidth / Math.max(size.x, 0.001),
         targetHeight / Math.max(size.y, 0.001),
         targetDepth / Math.max(size.z, 0.001)
     );
 
-    model.rotation.y = Math.PI * 0.82;
     model.scale.setScalar(scale);
-    model.position.set(
-        -center.x * scale,
-        0,
-        -center.z * scale
-    );
-
     model.updateMatrixWorld(true);
+
     const metrics = getVisualMetrics(model);
-    model.position.x -= metrics.center.x;
-    model.position.z -= metrics.center.z;
-    model.position.y += floorY - metrics.contactY;
+    model.position.set(
+        model.position.x - metrics.center.x,
+        model.position.y + floorY - metrics.baseY,
+        model.position.z - metrics.center.z
+    );
 
     model.traverse((node) => {
         if (!node.isMesh) {
@@ -166,8 +167,8 @@ function addAdaptiveStage(scene, object, accent) {
     const metrics = getVisualMetrics(object);
     const size = metrics.size;
     const center = metrics.center;
-    const floorY = metrics.contactY - 0.012;
-    const radius = Math.max(size.x, size.z) * 0.68;
+    const floorY = metrics.baseY - 0.018;
+    const radius = THREE.MathUtils.clamp(Math.max(size.x, size.z) * 0.72, 1.05, 2.05);
 
     const floorMaterial = new THREE.MeshStandardMaterial({
         color: "#f8fafc",
@@ -219,6 +220,7 @@ function getVisualMetrics(object) {
             box,
             center: box.getCenter(new THREE.Vector3()),
             size: box.getSize(new THREE.Vector3()),
+            baseY: box.min.y,
             contactY: box.min.y,
         };
     }
@@ -235,7 +237,8 @@ function getVisualMetrics(object) {
         box,
         center: box.getCenter(new THREE.Vector3()),
         size: box.getSize(new THREE.Vector3()),
-        contactY: percentile(yValues, 0.018),
+        baseY: box.min.y,
+        contactY: percentile(yValues, 0.01),
     };
 }
 
@@ -245,7 +248,12 @@ function collectVisibleMeshPoints(object) {
     const maxPointsPerMesh = 9000;
 
     object.traverse((node) => {
-        if (!node.isMesh || !node.visible || !node.geometry?.attributes?.position) {
+        if (
+            !node.isMesh
+            || !node.visible
+            || !hasRenderableMaterial(node.material)
+            || !node.geometry?.attributes?.position
+        ) {
             return;
         }
 
@@ -260,6 +268,16 @@ function collectVisibleMeshPoints(object) {
     });
 
     return points;
+}
+
+function hasRenderableMaterial(material) {
+    const materials = Array.isArray(material) ? material : [material];
+    return materials.some((item) => {
+        if (!item || item.visible === false) {
+            return false;
+        }
+        return !item.transparent || item.opacity > 0.02;
+    });
 }
 
 function percentile(sortedValues, ratio) {
