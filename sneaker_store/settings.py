@@ -8,13 +8,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-sneaker-store-key")
-DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = [
-    'djangoproject-production-0188.up.railway.app',
-    'localhost',
-    '127.0.0.1',
-    '0.0.0.0'
-]
+DEBUG = os.environ.get("DEBUG", "False").lower() in {"1", "true", "yes", "on"}
+ALLOWED_HOSTS = os.environ.get(
+    "ALLOWED_HOSTS",
+    "djangoproject-production-0188.up.railway.app,.up.railway.app,localhost,127.0.0.1,0.0.0.0",
+).split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -28,6 +26,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -70,20 +69,30 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://djangoproject-production-0188.up.railway.app',
-]
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS",
+    "https://djangoproject-production-0188.up.railway.app",
+).split(",")
 
 LANGUAGE_CODE = "ru-ru"
 TIME_ZONE = "Europe/Moscow"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

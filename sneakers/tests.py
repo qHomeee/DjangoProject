@@ -20,7 +20,7 @@ class SneakerPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "window.SNEAKER_MODEL")
-        self.assertContains(response, "sneakers/models/scene.gltf")
+        self.assertContains(response, ".gltf")
 
 
 class SneakerCreateTests(TestCase):
