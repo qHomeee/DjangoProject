@@ -1,0 +1,21 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: sneaker_store_web
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8080"
+    environment:
+      DJANGO_SECRET_KEY: local-docker-dev-key
+      DEBUG: "1"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - media_data:/app/media
+      - staticfiles_data:/app/staticfiles
+
+volumes:
+  media_data:
+  staticfiles_data:
