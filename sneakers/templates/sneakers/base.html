@@ -1,0 +1,66 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}3D Sneaker Store{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23111827'/%3E%3Cpath d='M14 39h36c3 0 5 2 5 5v1H17c-4 0-7-3-7-7v-3h4v4Z' fill='%231495ff'/%3E%3Cpath d='M18 35c5-9 13-13 24-8l8 9H18Z' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="{% static 'sneakers/css/styles.css' %}">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "{% static 'sneakers/vendor/three.module.js' %}",
+                "three/addons/": "{% static 'sneakers/vendor/addons/' %}"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="{% url 'sneakers:home' %}" aria-label="На главную">
+            <span class="brand-mark"></span>
+            <span>3D Sneaker Store</span>
+        </a>
+        <nav class="nav-links" aria-label="Основная навигация">
+            <a href="{% url 'sneakers:home' %}#catalog">Каталог</a>
+            <a href="{% url 'sneakers:home' %}#viewer">3D просмотр</a>
+            <a href="{% url 'sneakers:home' %}#delivery">Доставка</a>
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'sneakers:favorites' %}">Избранное{% if favorite_count %} {{ favorite_count }}{% endif %}</a>
+                <a href="{% url 'sneakers:cart' %}">Корзина{% if cart_count %} {{ cart_count }}{% endif %}</a>
+            {% endif %}
+            {% if request.user.is_authenticated and request.user.is_staff %}
+                <a href="{% url 'sneakers:create' %}">Добавить</a>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+                <form class="logout-form" method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Выйти</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Войти</a>
+                <a href="{% url 'sneakers:signup' %}">Регистрация</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <span>3D Sneaker Store</span>
+        <span>Интерактивная витрина кроссовок на Django и Three.js</span>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
