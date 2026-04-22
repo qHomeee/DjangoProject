@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Favorite, Sneaker
+from .models import CartItem, Favorite, Sneaker
 
 
 @admin.register(Sneaker)
@@ -22,4 +22,10 @@ class SneakerAdmin(admin.ModelAdmin):
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ("user", "sneaker", "created_at")
+    search_fields = ("user__username", "sneaker__name", "sneaker__brand")
+
+
+@admin.register(CartItem)
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ("user", "sneaker", "quantity", "updated_at")
     search_fields = ("user__username", "sneaker__name", "sneaker__brand")

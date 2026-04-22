@@ -3,15 +3,14 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.db.models import Case, Count, IntegerField, Q, Value, When
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.templatetags.static import static
 from django.views.decorators.http import require_POST
 
 from .catalog import SAMPLE_SNEAKERS
-from .context_processors import CART_SESSION_KEY
 from .forms import RegistrationForm, SneakerForm
-from .models import Favorite, Sneaker
+from .models import CartItem, Favorite, Sneaker
 
 
 def _catalog_queryset():
@@ -220,32 +219,10 @@ def _favorite_ids(request):
     )
 
 
-def _get_cart(request):
-    return request.session.setdefault(CART_SESSION_KEY, {})
-
-
-def _save_cart(request, cart):
-    request.session[CART_SESSION_KEY] = cart
-    request.session.modified = True
-
-
 @login_required
 def cart_detail(request):
-    cart = _get_cart(request)
-    sneaker_ids = [int(sneaker_id) for sneaker_id in cart.keys()]
-    preserved_order = Case(
-        *[When(id=sneaker_id, then=Value(index)) for index, sneaker_id in enumerate(sneaker_ids)],
-        output_field=IntegerField(),
-    )
-    sneakers = Sneaker.objects.filter(id__in=sneaker_ids).order_by(preserved_order) if sneaker_ids else []
-    items = []
-    total = 0
-
-    for sneaker in sneakers:
-        quantity = int(cart.get(str(sneaker.id), 0))
-        subtotal = sneaker.price * quantity
-        total += subtotal
-        items.append({"sneaker": sneaker, "quantity": quantity, "subtotal": subtotal})
+    items = CartItem.objects.filter(user=request.user).select_related("sneaker")
+    total = sum(item.subtotal for item in items)
 
     return render(request, "sneakers/cart.html", {"items": items, "total": total})
 
@@ -254,10 +231,13 @@ def cart_detail(request):
 @require_POST
 def cart_add(request, pk):
     sneaker = get_object_or_404(Sneaker, pk=pk)
-    cart = _get_cart(request)
-    sneaker_key = str(sneaker.id)
-    cart[sneaker_key] = int(cart.get(sneaker_key, 0)) + 1
-    _save_cart(request, cart)
+    cart_item, created = CartItem.objects.get_or_create(
+        user=request.user,
+        sneaker=sneaker,
+    )
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save(update_fields=["quantity", "updated_at"])
     messages.success(request, f"{sneaker.brand} {sneaker.name} добавлены в корзину.")
     return redirect(request.POST.get("next") or sneaker.get_absolute_url())
 
@@ -266,9 +246,7 @@ def cart_add(request, pk):
 @require_POST
 def cart_remove(request, pk):
     sneaker = get_object_or_404(Sneaker, pk=pk)
-    cart = _get_cart(request)
-    cart.pop(str(sneaker.id), None)
-    _save_cart(request, cart)
+    CartItem.objects.filter(user=request.user, sneaker=sneaker).delete()
     messages.success(request, f"{sneaker.brand} {sneaker.name} удалены из корзины.")
     return redirect("sneakers:cart")
 

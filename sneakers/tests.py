@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from .models import Favorite, Sneaker
+from .models import CartItem, Favorite, Sneaker
 
 
 class SneakerPageTests(TestCase):
@@ -139,7 +139,21 @@ class AccountShoppingTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(self.client.session["cart"][str(self.sneaker.pk)], 1)
+        self.assertEqual(
+            CartItem.objects.get(user=self.user, sneaker=self.sneaker).quantity,
+            1,
+        )
+
+    def test_cart_persists_after_logout(self):
+        self.client.login(username="customer", password="pass12345")
+        self.client.post(reverse("sneakers:cart_add", kwargs={"pk": self.sneaker.pk}))
+        self.client.logout()
+        self.client.login(username="customer", password="pass12345")
+
+        response = self.client.get(reverse("sneakers:cart"))
+
+        self.assertContains(response, self.sneaker.name)
+        self.assertTrue(CartItem.objects.filter(user=self.user, sneaker=self.sneaker).exists())
 
     def test_logged_in_user_can_toggle_favorite(self):
         self.client.login(username="customer", password="pass12345")
@@ -153,3 +167,13 @@ class AccountShoppingTests(TestCase):
         self.assertTrue(
             Favorite.objects.filter(user=self.user, sneaker=self.sneaker).exists()
         )
+
+    def test_favorite_persists_after_logout(self):
+        self.client.login(username="customer", password="pass12345")
+        self.client.post(reverse("sneakers:favorite_toggle", kwargs={"pk": self.sneaker.pk}))
+        self.client.logout()
+        self.client.login(username="customer", password="pass12345")
+
+        response = self.client.get(reverse("sneakers:favorites"))
+
+        self.assertContains(response, self.sneaker.name)

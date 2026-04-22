@@ -65,19 +65,19 @@
                             {% if request.user.is_authenticated %}
                                 <form method="post" action="{% url 'sneakers:cart_add' sneaker.id %}">
                                     {% csrf_token %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}#catalog">
                                     <button class="button primary compact" type="submit">В корзину</button>
                                 </form>
                                 <form method="post" action="{% url 'sneakers:favorite_toggle' sneaker.id %}">
                                     {% csrf_token %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}#catalog">
                                     <button class="button secondary compact" type="submit">
                                         {% if sneaker.id in favorite_ids %}В избранном{% else %}В избранное{% endif %}
                                     </button>
                                 </form>
                             {% else %}
-                                <a class="button primary compact" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">В корзину</a>
-                                <a class="button secondary compact" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">В избранное</a>
+                                <a class="button primary compact" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}%23catalog">В корзину</a>
+                                <a class="button secondary compact" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}%23catalog">В избранное</a>
                             {% endif %}
                         </div>
                     {% endif %}

@@ -97,3 +97,39 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.sneaker}"
+
+
+class CartItem(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="cart_items",
+        verbose_name="Пользователь",
+    )
+    sneaker = models.ForeignKey(
+        Sneaker,
+        on_delete=models.CASCADE,
+        related_name="cart_items",
+        verbose_name="Кроссовки",
+    )
+    quantity = models.PositiveIntegerField("Количество", default=1)
+    created_at = models.DateTimeField("Добавлено", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "sneaker"],
+                name="unique_user_cart_sneaker",
+            )
+        ]
+        ordering = ["-updated_at"]
+        verbose_name = "Товар в корзине"
+        verbose_name_plural = "Корзина"
+
+    @property
+    def subtotal(self):
+        return self.sneaker.price * self.quantity
+
+    def __str__(self):
+        return f"{self.user} - {self.sneaker} x {self.quantity}"
