@@ -1,0 +1,46 @@
+{% extends "sneakers/base.html" %}
+
+{% block title %}Избранное - 3D Sneaker Store{% endblock %}
+
+{% block content %}
+<section class="section account-section">
+    <div class="section-heading">
+        <p class="eyebrow">Аккаунт</p>
+        <h1>Избранное</h1>
+    </div>
+
+    {% if favorites %}
+        <div class="account-list">
+            {% for favorite in favorites %}
+                <article class="account-item" style="--accent: {{ favorite.sneaker.accent_color }}">
+                    <a href="{{ favorite.sneaker.get_absolute_url }}">
+                        <span class="item-title">{{ favorite.sneaker.brand }} {{ favorite.sneaker.name }}</span>
+                        <span>{{ favorite.sneaker.colorway }}</span>
+                    </a>
+                    <div class="item-meta">
+                        <strong>{{ favorite.sneaker.price|floatformat:0 }} ₽</strong>
+                    </div>
+                    <div class="item-actions">
+                        <form method="post" action="{% url 'sneakers:cart_add' favorite.sneaker.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button class="button primary compact" type="submit">В корзину</button>
+                        </form>
+                        <form method="post" action="{% url 'sneakers:favorite_toggle' favorite.sneaker.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button class="button secondary compact" type="submit">Убрать</button>
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h2>Пока ничего нет</h2>
+            <p>Добавляйте кроссовки в избранное, чтобы быстро вернуться к ним позже.</p>
+            <a class="button primary" href="{% url 'sneakers:home' %}#catalog">В каталог</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

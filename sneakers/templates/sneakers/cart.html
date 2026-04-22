@@ -1,0 +1,43 @@
+{% extends "sneakers/base.html" %}
+
+{% block title %}Корзина - 3D Sneaker Store{% endblock %}
+
+{% block content %}
+<section class="section account-section">
+    <div class="section-heading">
+        <p class="eyebrow">Покупки</p>
+        <h1>Корзина</h1>
+    </div>
+
+    {% if items %}
+        <div class="account-list">
+            {% for item in items %}
+                <article class="account-item" style="--accent: {{ item.sneaker.accent_color }}">
+                    <a href="{{ item.sneaker.get_absolute_url }}">
+                        <span class="item-title">{{ item.sneaker.brand }} {{ item.sneaker.name }}</span>
+                        <span>{{ item.sneaker.colorway }}</span>
+                    </a>
+                    <div class="item-meta">
+                        <span>{{ item.quantity }} шт.</span>
+                        <strong>{{ item.subtotal|floatformat:0 }} ₽</strong>
+                    </div>
+                    <form method="post" action="{% url 'sneakers:cart_remove' item.sneaker.id %}">
+                        {% csrf_token %}
+                        <button class="button secondary compact" type="submit">Удалить</button>
+                    </form>
+                </article>
+            {% endfor %}
+        </div>
+        <div class="cart-total">
+            <span>Итого</span>
+            <strong>{{ total|floatformat:0 }} ₽</strong>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h2>Корзина пустая</h2>
+            <p>Откройте каталог и добавьте понравившуюся пару.</p>
+            <a class="button primary" href="{% url 'sneakers:home' %}#catalog">В каталог</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
