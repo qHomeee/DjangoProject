@@ -12,6 +12,10 @@ urlpatterns = [
     path("cart/remove/<int:pk>/", views.cart_remove, name="cart_remove"),
     path("favorites/", views.favorites_detail, name="favorites"),
     path("favorites/toggle/<int:pk>/", views.favorite_toggle, name="favorite_toggle"),
+    path("manage/", views.management_dashboard, name="management"),
+    path("manage/sneakers/", views.management_sneaker_list, name="manage_sneakers"),
+    path("manage/sneakers/<int:pk>/edit/", views.sneaker_update, name="edit"),
+    path("manage/sneakers/<int:pk>/delete/", views.sneaker_delete, name="delete"),
     path("sneakers/add/", views.sneaker_create, name="create"),
     path("sneakers/<slug:slug>/", views.sneaker_detail, name="detail"),
 ]

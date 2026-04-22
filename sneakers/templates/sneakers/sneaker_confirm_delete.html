@@ -1,0 +1,21 @@
+{% extends "sneakers/base.html" %}
+
+{% block title %}Удалить кроссовки - 3D Sneaker Store{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-panel">
+        <p class="eyebrow">Удаление товара</p>
+        <h1>Удалить кроссовки?</h1>
+        <p class="detail-lead">
+            {{ sneaker.brand }} {{ sneaker.name }} будут удалены из каталога, избранного и корзин пользователей.
+        </p>
+
+        <form class="site-form" method="post">
+            {% csrf_token %}
+            <button class="button danger wide" type="submit">Удалить</button>
+            <a class="button secondary wide" href="{% url 'sneakers:manage_sneakers' %}">Отмена</a>
+        </form>
+    </div>
+</section>
+{% endblock %}

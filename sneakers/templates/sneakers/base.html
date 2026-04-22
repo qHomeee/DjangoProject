@@ -31,6 +31,7 @@
                 <a href="{% url 'sneakers:cart' %}">Корзина{% if cart_count %} {{ cart_count }}{% endif %}</a>
             {% endif %}
             {% if request.user.is_authenticated and request.user.is_staff %}
+                <a href="{% url 'sneakers:management' %}">Управление</a>
                 <a href="{% url 'sneakers:create' %}">Добавить</a>
             {% endif %}
             {% if request.user.is_authenticated %}

@@ -1,0 +1,76 @@
+{% extends "sneakers/base.html" %}
+
+{% block title %}Управление - 3D Sneaker Store{% endblock %}
+
+{% block content %}
+<section class="section account-section">
+    <div class="section-heading management-heading">
+        <div>
+            <p class="eyebrow">Панель администратора</p>
+            <h1>Управление сайтом</h1>
+        </div>
+        <a class="button primary" href="{% url 'sneakers:create' %}">Добавить кроссовки</a>
+    </div>
+
+    <div class="stats-grid">
+        <a class="stat-card" href="{% url 'sneakers:manage_sneakers' %}">
+            <span>Товары</span>
+            <strong>{{ sneakers_count }}</strong>
+        </a>
+        <div class="stat-card">
+            <span>Пользователи</span>
+            <strong>{{ users_count }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Добавлений в избранное</span>
+            <strong>{{ favorites_count }}</strong>
+        </div>
+    </div>
+
+    <div class="management-grid">
+        <section>
+            <div class="section-heading small-heading">
+                <p class="eyebrow">Каталог</p>
+                <h2>Последние товары</h2>
+            </div>
+            <div class="account-list">
+                {% for sneaker in latest_sneakers %}
+                    <article class="account-item compact-item" style="--accent: {{ sneaker.accent_color }}">
+                        <a href="{{ sneaker.get_absolute_url }}">
+                            <span class="item-title">{{ sneaker.brand }} {{ sneaker.name }}</span>
+                            <span>{{ sneaker.category }} · {{ sneaker.price|floatformat:0 }} ₽</span>
+                        </a>
+                        <div class="item-actions">
+                            <a class="button secondary compact" href="{% url 'sneakers:edit' sneaker.id %}">Редактировать</a>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="empty-state">Каталог пуст.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section>
+            <div class="section-heading small-heading">
+                <p class="eyebrow">Аккаунты</p>
+                <h2>Новые пользователи</h2>
+            </div>
+            <div class="account-list">
+                {% for user in latest_users %}
+                    <article class="account-item compact-item">
+                        <div>
+                            <span class="item-title">{{ user.username }}</span>
+                            <span>{% if user.is_staff %}Администратор{% else %}Пользователь{% endif %}</span>
+                        </div>
+                        <div class="item-meta">
+                            <span>{{ user.date_joined|date:"d.m.Y H:i" }}</span>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="empty-state">Пользователей пока нет.</div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

@@ -1,12 +1,12 @@
 {% extends "sneakers/base.html" %}
 
-{% block title %}Добавить кроссовки - 3D Sneaker Store{% endblock %}
+{% block title %}{{ page_title|default:"Добавить кроссовки" }} - 3D Sneaker Store{% endblock %}
 
 {% block content %}
 <section class="form-layout">
     <div class="form-heading">
         <p class="eyebrow">Управление каталогом</p>
-        <h1>Добавить кроссовки</h1>
+        <h1>{{ page_title|default:"Добавить кроссовки" }}</h1>
         <p class="detail-lead">
             Заполните карточку товара. 3D-модель должна лежать в папке static,
             а в поле модели нужен путь вида sneakers/models/scene.gltf.
@@ -36,8 +36,11 @@
         </div>
 
         <div class="form-actions">
-            <button class="button primary" type="submit">Добавить в каталог</button>
-            <a class="button secondary" href="{% url 'sneakers:home' %}#catalog">Отмена</a>
+            <button class="button primary" type="submit">{{ submit_label|default:"Сохранить" }}</button>
+            <a class="button secondary" href="{% url 'sneakers:manage_sneakers' %}">Отмена</a>
+            {% if sneaker %}
+                <a class="button secondary" href="{{ sneaker.get_absolute_url }}">Открыть товар</a>
+            {% endif %}
         </div>
     </form>
 </section>

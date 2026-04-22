@@ -74,6 +74,39 @@ class SneakerCreateTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Sneaker.objects.filter(slug="test-runner").exists())
 
+    def test_staff_user_can_open_management_list(self):
+        self.client.login(username="manager", password="pass12345")
+
+        response = self.client.get(reverse("sneakers:manage_sneakers"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Управление кроссовками")
+
+    def test_staff_user_can_update_sneaker(self):
+        sneaker = Sneaker.objects.first()
+        self.client.login(username="manager", password="pass12345")
+        payload = self._valid_payload()
+        payload["name"] = "Updated Runner"
+        payload["slug"] = sneaker.slug
+
+        response = self.client.post(
+            reverse("sneakers:edit", kwargs={"pk": sneaker.pk}),
+            data=payload,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        sneaker.refresh_from_db()
+        self.assertEqual(sneaker.name, "Updated Runner")
+
+    def test_staff_user_can_delete_sneaker(self):
+        sneaker = Sneaker.objects.first()
+        self.client.login(username="manager", password="pass12345")
+
+        response = self.client.post(reverse("sneakers:delete", kwargs={"pk": sneaker.pk}))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Sneaker.objects.filter(pk=sneaker.pk).exists())
+
 
 class AccountShoppingTests(TestCase):
     def setUp(self):

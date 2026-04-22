@@ -1,0 +1,56 @@
+{% extends "sneakers/base.html" %}
+
+{% block title %}Управление каталогом - 3D Sneaker Store{% endblock %}
+
+{% block content %}
+<section class="section account-section">
+    <div class="section-heading management-heading">
+        <div>
+            <p class="eyebrow">Каталог</p>
+            <h1>Управление кроссовками</h1>
+        </div>
+        <a class="button primary" href="{% url 'sneakers:create' %}">Добавить кроссовки</a>
+    </div>
+
+    <form class="management-filters" method="get">
+        <input class="form-control" type="search" name="q" value="{{ query }}" placeholder="Поиск по названию, бренду, цвету">
+        <select class="form-control" name="brand">
+            <option value="">Все бренды</option>
+            {% for brand in brands %}
+                <option value="{{ brand }}"{% if brand == selected_brand %} selected{% endif %}>{{ brand }}</option>
+            {% endfor %}
+        </select>
+        <button class="button secondary" type="submit">Фильтровать</button>
+    </form>
+
+    <div class="management-table">
+        <div class="management-row table-head">
+            <span>Товар</span>
+            <span>Категория</span>
+            <span>Цена</span>
+            <span>Избранное</span>
+            <span>Действия</span>
+        </div>
+        {% for sneaker in sneakers %}
+            <article class="management-row" style="--accent: {{ sneaker.accent_color }}">
+                <a href="{{ sneaker.get_absolute_url }}">
+                    <strong>{{ sneaker.brand }} {{ sneaker.name }}</strong>
+                    <small>{{ sneaker.colorway }}</small>
+                </a>
+                <span>{{ sneaker.category }}</span>
+                <span>{{ sneaker.price|floatformat:0 }} ₽</span>
+                <span>{{ sneaker.favorites_total }}</span>
+                <div class="row-actions">
+                    <a class="button secondary compact" href="{% url 'sneakers:edit' sneaker.id %}">Редактировать</a>
+                    <a class="button danger compact" href="{% url 'sneakers:delete' sneaker.id %}">Удалить</a>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-state">
+                <h2>Ничего не найдено</h2>
+                <p>Измените фильтр или добавьте новый товар.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

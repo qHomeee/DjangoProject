@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.db.models import Case, IntegerField, Value, When
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.templatetags.static import static
 from django.views.decorators.http import require_POST
@@ -76,17 +77,74 @@ def _can_manage_sneakers(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 
+def _require_manager(user):
+    if not _can_manage_sneakers(user):
+        raise PermissionDenied("Раздел доступен только администраторам.")
+
+
+@login_required
+def management_dashboard(request):
+    _require_manager(request.user)
+    sneakers_count = Sneaker.objects.count()
+    users_count = User.objects.count()
+    favorites_count = Favorite.objects.count()
+    latest_sneakers = Sneaker.objects.order_by("-created_at")[:5]
+    latest_users = User.objects.order_by("-date_joined")[:5]
+
+    return render(
+        request,
+        "sneakers/management_dashboard.html",
+        {
+            "sneakers_count": sneakers_count,
+            "users_count": users_count,
+            "favorites_count": favorites_count,
+            "latest_sneakers": latest_sneakers,
+            "latest_users": latest_users,
+        },
+    )
+
+
+@login_required
+def management_sneaker_list(request):
+    _require_manager(request.user)
+    query = request.GET.get("q", "").strip()
+    brand = request.GET.get("brand", "").strip()
+    sneakers = Sneaker.objects.annotate(favorites_total=Count("favorites"))
+
+    if query:
+        sneakers = sneakers.filter(
+            Q(name__icontains=query)
+            | Q(brand__icontains=query)
+            | Q(category__icontains=query)
+            | Q(colorway__icontains=query)
+        )
+
+    if brand:
+        sneakers = sneakers.filter(brand=brand)
+
+    brands = Sneaker.objects.order_by("brand").values_list("brand", flat=True).distinct()
+    return render(
+        request,
+        "sneakers/management_sneaker_list.html",
+        {
+            "sneakers": sneakers,
+            "brands": brands,
+            "query": query,
+            "selected_brand": brand,
+        },
+    )
+
+
 @login_required
 def sneaker_create(request):
-    if not _can_manage_sneakers(request.user):
-        raise PermissionDenied("Добавлять кроссовки могут только администраторы.")
+    _require_manager(request.user)
 
     if request.method == "POST":
         form = SneakerForm(request.POST)
         if form.is_valid():
             sneaker = form.save()
             messages.success(request, "Кроссовки добавлены в каталог.")
-            return redirect(sneaker.get_absolute_url())
+            return redirect("sneakers:manage_sneakers")
     else:
         form = SneakerForm(
             initial={
@@ -96,7 +154,55 @@ def sneaker_create(request):
             }
         )
 
-    return render(request, "sneakers/sneaker_form.html", {"form": form})
+    return render(
+        request,
+        "sneakers/sneaker_form.html",
+        {
+            "form": form,
+            "page_title": "Добавить кроссовки",
+            "submit_label": "Добавить в каталог",
+        },
+    )
+
+
+@login_required
+def sneaker_update(request, pk):
+    _require_manager(request.user)
+    sneaker = get_object_or_404(Sneaker, pk=pk)
+
+    if request.method == "POST":
+        form = SneakerForm(request.POST, instance=sneaker)
+        if form.is_valid():
+            sneaker = form.save()
+            messages.success(request, "Карточка кроссовок обновлена.")
+            return redirect("sneakers:manage_sneakers")
+    else:
+        form = SneakerForm(instance=sneaker)
+
+    return render(
+        request,
+        "sneakers/sneaker_form.html",
+        {
+            "form": form,
+            "sneaker": sneaker,
+            "page_title": f"Редактировать {sneaker.brand} {sneaker.name}",
+            "submit_label": "Сохранить изменения",
+        },
+    )
+
+
+@login_required
+def sneaker_delete(request, pk):
+    _require_manager(request.user)
+    sneaker = get_object_or_404(Sneaker, pk=pk)
+
+    if request.method == "POST":
+        sneaker_name = f"{sneaker.brand} {sneaker.name}"
+        sneaker.delete()
+        messages.success(request, f"{sneaker_name} удалены из каталога.")
+        return redirect("sneakers:manage_sneakers")
+
+    return render(request, "sneakers/sneaker_confirm_delete.html", {"sneaker": sneaker})
 
 
 def _favorite_ids(request):
