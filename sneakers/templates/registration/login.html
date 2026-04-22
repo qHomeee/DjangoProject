@@ -1,0 +1,30 @@
+{% extends "sneakers/base.html" %}
+
+{% block title %}Вход - 3D Sneaker Store{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-panel">
+        <p class="eyebrow">Аккаунт</p>
+        <h1>Вход</h1>
+        <p class="detail-lead">Войдите под пользователем с правами администратора, чтобы добавлять кроссовки через сайт.</p>
+
+        {% if form.errors %}
+            <div class="alert error">Неверный логин или пароль.</div>
+        {% endif %}
+
+        <form class="site-form" method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <label for="{{ form.username.id_for_label }}">Логин</label>
+                {{ form.username }}
+            </div>
+            <div class="form-row">
+                <label for="{{ form.password.id_for_label }}">Пароль</label>
+                {{ form.password }}
+            </div>
+            <button class="button primary wide" type="submit">Войти</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

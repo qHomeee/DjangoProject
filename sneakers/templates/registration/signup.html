@@ -1,0 +1,30 @@
+{% extends "sneakers/base.html" %}
+
+{% block title %}Регистрация - 3D Sneaker Store{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-panel">
+        <p class="eyebrow">Аккаунт</p>
+        <h1>Регистрация</h1>
+        <p class="detail-lead">Создайте обычный аккаунт, чтобы добавлять кроссовки в корзину и избранное.</p>
+
+        <form class="site-form" method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-row">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <span class="help-text">{{ field.help_text }}</span>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <button class="button primary wide" type="submit">Создать аккаунт</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "sneakers/base.html" %}
+
+{% block title %}Добавить кроссовки - 3D Sneaker Store{% endblock %}
+
+{% block content %}
+<section class="form-layout">
+    <div class="form-heading">
+        <p class="eyebrow">Управление каталогом</p>
+        <h1>Добавить кроссовки</h1>
+        <p class="detail-lead">
+            Заполните карточку товара. 3D-модель должна лежать в папке static,
+            а в поле модели нужен путь вида sneakers/models/scene.gltf.
+        </p>
+    </div>
+
+    <form class="site-form product-form" method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="form-grid">
+            {% for field in form %}
+                <div class="form-row{% if field.name == 'description' or field.name == 'short_description' or field.name == 'model_path' %} full{% endif %}{% if field.field.widget.input_type == 'checkbox' %} checkbox-row{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <span class="help-text">{{ field.help_text }}</span>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">Добавить в каталог</button>
+            <a class="button secondary" href="{% url 'sneakers:home' %}#catalog">Отмена</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
