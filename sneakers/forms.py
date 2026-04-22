@@ -81,6 +81,9 @@ class SneakerForm(forms.ModelForm):
 
         return sorted(set(sizes))
 
+    def clean_model_path(self):
+        return self.cleaned_data["model_path"].replace("\\", "/").strip()
+
     def save(self, commit=True):
         sneaker = super().save(commit=False)
         sneaker.sizes = self.cleaned_data["sizes_text"]

@@ -137,16 +137,15 @@ function normalizeModel(model) {
     model.scale.setScalar(scale);
     model.position.set(
         -center.x * scale,
-        floorY - box.min.y * scale,
+        0,
         -center.z * scale
     );
 
     model.updateMatrixWorld(true);
-    const fittedBox = new THREE.Box3().setFromObject(model);
-    const fittedCenter = fittedBox.getCenter(new THREE.Vector3());
-    model.position.x -= fittedCenter.x;
-    model.position.z -= fittedCenter.z;
-    model.position.y += floorY - fittedBox.min.y;
+    const metrics = getVisualMetrics(model);
+    model.position.x -= metrics.center.x;
+    model.position.z -= metrics.center.z;
+    model.position.y += floorY - metrics.contactY;
 
     model.traverse((node) => {
         if (!node.isMesh) {
@@ -164,10 +163,10 @@ function normalizeModel(model) {
 }
 
 function addAdaptiveStage(scene, object, accent) {
-    const box = new THREE.Box3().setFromObject(object);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const floorY = box.min.y - 0.015;
+    const metrics = getVisualMetrics(object);
+    const size = metrics.size;
+    const center = metrics.center;
+    const floorY = metrics.contactY - 0.012;
     const radius = Math.max(size.x, size.z) * 0.68;
 
     const floorMaterial = new THREE.MeshStandardMaterial({
@@ -195,9 +194,9 @@ function fitCameraToObject(object, camera, controls) {
         return;
     }
 
-    const box = new THREE.Box3().setFromObject(object);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
+    const metrics = getVisualMetrics(object);
+    const center = metrics.center;
+    const size = metrics.size;
     const maxSize = Math.max(size.x, size.y, size.z);
     const distance = Math.max(maxSize * 1.65, 2.2);
 
@@ -208,6 +207,71 @@ function fitCameraToObject(object, camera, controls) {
     camera.far = distance * 100;
     camera.updateProjectionMatrix();
     controls.update();
+}
+
+function getVisualMetrics(object) {
+    object.updateMatrixWorld(true);
+
+    const points = collectVisibleMeshPoints(object);
+    if (!points.length) {
+        const box = new THREE.Box3().setFromObject(object);
+        return {
+            box,
+            center: box.getCenter(new THREE.Vector3()),
+            size: box.getSize(new THREE.Vector3()),
+            contactY: box.min.y,
+        };
+    }
+
+    const box = new THREE.Box3();
+    const yValues = [];
+    points.forEach((point) => {
+        box.expandByPoint(point);
+        yValues.push(point.y);
+    });
+    yValues.sort((a, b) => a - b);
+
+    return {
+        box,
+        center: box.getCenter(new THREE.Vector3()),
+        size: box.getSize(new THREE.Vector3()),
+        contactY: percentile(yValues, 0.018),
+    };
+}
+
+function collectVisibleMeshPoints(object) {
+    const points = [];
+    const point = new THREE.Vector3();
+    const maxPointsPerMesh = 9000;
+
+    object.traverse((node) => {
+        if (!node.isMesh || !node.visible || !node.geometry?.attributes?.position) {
+            return;
+        }
+
+        const positions = node.geometry.attributes.position;
+        const step = Math.max(1, Math.floor(positions.count / maxPointsPerMesh));
+        node.updateWorldMatrix(true, false);
+
+        for (let index = 0; index < positions.count; index += step) {
+            point.fromBufferAttribute(positions, index).applyMatrix4(node.matrixWorld);
+            points.push(point.clone());
+        }
+    });
+
+    return points;
+}
+
+function percentile(sortedValues, ratio) {
+    if (!sortedValues.length) {
+        return 0;
+    }
+
+    const index = Math.min(
+        sortedValues.length - 1,
+        Math.max(0, Math.floor(sortedValues.length * ratio))
+    );
+    return sortedValues[index];
 }
 
 function buildFallbackSneaker(scene, accent) {

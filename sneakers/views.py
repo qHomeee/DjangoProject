@@ -29,7 +29,7 @@ def home(request):
         {
             "sneakers": sneakers,
             "featured": featured,
-            "featured_model_url": static(featured.model_path),
+            "featured_model_url": _static_model_url(featured.model_path),
             "favorite_ids": favorite_ids,
         },
     )
@@ -50,10 +50,14 @@ def sneaker_detail(request, slug):
         {
             "sneaker": sneaker,
             "related": related,
-            "model_url": static(sneaker.model_path),
+            "model_url": _static_model_url(sneaker.model_path),
             "favorite_ids": _favorite_ids(request),
         },
     )
+
+
+def _static_model_url(model_path):
+    return static(model_path.replace("\\", "/"))
 
 
 def register(request):
