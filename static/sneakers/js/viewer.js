@@ -35,15 +35,18 @@ function createViewer(container) {
     controls.maxDistance = 4.8;
     controls.maxPolarAngle = Math.PI / 2;
     controls.target.set(0, 0.08, 0);
+    scene.userData.camera = camera;
+    scene.userData.controls = controls;
 
     addLights(scene, accent);
-    addStage(scene, accent);
 
     const modelPath = container.dataset.modelPath || window.SNEAKER_MODEL;
     if (modelPath) {
         loadModel(modelPath, scene, status, accent);
     } else {
-        buildFallbackSneaker(scene, accent);
+        const fallback = buildFallbackSneaker(scene, accent);
+        fitCameraToObject(fallback, camera, controls);
+        addAdaptiveStage(scene, fallback, accent);
         hideStatus(status);
     }
 
@@ -86,27 +89,6 @@ function addLights(scene, accent) {
     scene.add(rimLight);
 }
 
-function addStage(scene, accent) {
-    const floorMaterial = new THREE.MeshStandardMaterial({
-        color: "#f8fafc",
-        roughness: 0.7,
-        metalness: 0.05,
-    });
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(1.65, 96), floorMaterial);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.5;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(1.35, 0.012, 10, 160),
-        new THREE.MeshBasicMaterial({ color: accent })
-    );
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = -0.47;
-    scene.add(ring);
-}
-
 function loadModel(modelPath, scene, status, accent) {
     const loader = new GLTFLoader();
     loader.load(
@@ -115,6 +97,8 @@ function loadModel(modelPath, scene, status, accent) {
             const model = gltf.scene;
             normalizeModel(model);
             scene.add(model);
+            addAdaptiveStage(scene, model, accent);
+            fitCameraToObject(model, scene.userData.camera, scene.userData.controls);
             hideStatus(status);
         },
         (event) => {
@@ -124,7 +108,9 @@ function loadModel(modelPath, scene, status, accent) {
             }
         },
         () => {
-            buildFallbackSneaker(scene, accent);
+            const fallback = buildFallbackSneaker(scene, accent);
+            addAdaptiveStage(scene, fallback, accent);
+            fitCameraToObject(fallback, scene.userData.camera, scene.userData.controls);
             if (status) {
                 status.textContent = "Показана резервная 3D модель";
                 window.setTimeout(() => hideStatus(status), 1200);
@@ -134,17 +120,24 @@ function loadModel(modelPath, scene, status, accent) {
 }
 
 function normalizeModel(model) {
-    const stageY = -0.46;
+    const floorY = -0.42;
     const box = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    const scale = 2.25 / Math.max(size.x, size.y, size.z);
+    const targetWidth = 2.35;
+    const targetHeight = 1.05;
+    const targetDepth = 1.25;
+    const scale = Math.min(
+        targetWidth / Math.max(size.x, 0.001),
+        targetHeight / Math.max(size.y, 0.001),
+        targetDepth / Math.max(size.z, 0.001)
+    );
 
     model.rotation.y = Math.PI * 0.82;
     model.scale.setScalar(scale);
     model.position.set(
         -center.x * scale,
-        stageY - box.min.y * scale,
+        floorY - box.min.y * scale,
         -center.z * scale
     );
 
@@ -153,7 +146,7 @@ function normalizeModel(model) {
     const fittedCenter = fittedBox.getCenter(new THREE.Vector3());
     model.position.x -= fittedCenter.x;
     model.position.z -= fittedCenter.z;
-    model.position.y += stageY - fittedBox.min.y - 0.55;
+    model.position.y += floorY - fittedBox.min.y;
 
     model.traverse((node) => {
         if (!node.isMesh) {
@@ -168,6 +161,53 @@ function normalizeModel(model) {
             material.needsUpdate = true;
         });
     });
+}
+
+function addAdaptiveStage(scene, object, accent) {
+    const box = new THREE.Box3().setFromObject(object);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const floorY = box.min.y - 0.015;
+    const radius = Math.max(size.x, size.z) * 0.68;
+
+    const floorMaterial = new THREE.MeshStandardMaterial({
+        color: "#f8fafc",
+        roughness: 0.72,
+        metalness: 0.04,
+    });
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(radius, 96), floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(center.x, floorY, center.z);
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(radius * 0.86, 0.01, 10, 160),
+        new THREE.MeshBasicMaterial({ color: accent })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(center.x, floorY + 0.012, center.z);
+    scene.add(ring);
+}
+
+function fitCameraToObject(object, camera, controls) {
+    if (!camera || !controls) {
+        return;
+    }
+
+    const box = new THREE.Box3().setFromObject(object);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxSize = Math.max(size.x, size.y, size.z);
+    const distance = Math.max(maxSize * 1.65, 2.2);
+
+    controls.target.copy(center);
+    controls.target.y += size.y * 0.08;
+    camera.position.set(center.x + distance * 0.82, center.y + distance * 0.38, center.z + distance);
+    camera.near = Math.max(distance / 100, 0.01);
+    camera.far = distance * 100;
+    camera.updateProjectionMatrix();
+    controls.update();
 }
 
 function buildFallbackSneaker(scene, accent) {
@@ -216,6 +256,7 @@ function buildFallbackSneaker(scene, accent) {
     group.rotation.y = -0.35;
     group.position.y = -0.1;
     scene.add(group);
+    return group;
 }
 
 function hideStatus(status) {
