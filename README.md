@@ -21,7 +21,7 @@ sneaker_store/            # настройки Django-проекта
 sneakers/                 # приложение магазина
 static/sneakers/css/      # стили интерфейса
 static/sneakers/js/       # Three.js viewer
-static/sneakers/models/   # GLTF/BIN/texture файлы модели
+static/sneakers/models/   # по сути лежит модель базовая, а также модель стенда на котором расположены кроссовки
 README.md
 requirements.txt
 manage.py
@@ -40,14 +40,6 @@ python manage.py runserver
 После запуска сайт будет доступен по адресу `http://127.0.0.1:8000/`.
 
 ## Как заменить 3D-модель
-
-1. Положите файлы модели в `static/sneakers/models/`.
-2. Если модель использует текстуры, сохраните их рядом или в подпапке `textures/`, как в текущем примере.
-3. Укажите путь к основному `.gltf` или `.glb` файлу в поле `model_path` товара, например:
-
-```text
-sneakers/models/my-sneaker/scene.gltf
-```
 
 Viewer получает путь из Django-шаблона через `data-model-path` и загружает модель в `static/sneakers/js/viewer.js`.
 
@@ -82,7 +74,7 @@ python manage.py createsuperuser
 
 На сайте есть система входа и форма добавления товара без перехода в Django admin.
 
-1. Создайте администратора или staff-пользователя:
+1. Создайте администратора:
 
 ```bash
 python manage.py createsuperuser
