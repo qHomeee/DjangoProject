@@ -8,10 +8,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-sneaker-store-key")
-DEBUG = os.environ.get("DEBUG", "True").lower() in {"1", "true", "yes", "on"}
+DEBUG = os.environ.get("DEBUG", "False").lower() in {"1", "true", "yes", "on"}
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
-    "djangoproject-production-0188.up.railway.app,.up.railway.app,localhost,127.0.0.1,0.0.0.0",
+    "zaulindjango.up.railway.app,djangoproject-production-0188.up.railway.app,.up.railway.app,localhost,127.0.0.1,0.0.0.0",
 ).split(",")
 
 INSTALLED_APPS = [
@@ -71,7 +71,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     "CSRF_TRUSTED_ORIGINS",
-    "https://djangoproject-production-0188.up.railway.app",
+    "https://zaulindjango.up.railway.app,https://djangoproject-production-0188.up.railway.app",
 ).split(",")
 
 LANGUAGE_CODE = "ru-ru"
