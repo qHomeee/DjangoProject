@@ -3,21 +3,18 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+
+
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-sneaker-store-key")
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = [
     'djangoproject-production-0188.up.railway.app',
     'localhost',
     '127.0.0.1',
     '0.0.0.0'
 ]
-
-
-
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-sneaker-store-key")
-DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,0.0.0.0",
-).split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
