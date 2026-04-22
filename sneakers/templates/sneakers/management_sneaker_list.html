@@ -47,7 +47,12 @@
                 <span>{{ sneaker.favorites_total }}</span>
                 <div class="row-actions">
                     <a class="button secondary compact" href="{% url 'sneakers:edit' sneaker.id %}">Редактировать</a>
-                    <a class="button danger compact" href="{% url 'sneakers:delete' sneaker.id %}">Удалить</a>
+                    <a
+                        class="button danger compact"
+                        href="{% url 'sneakers:delete' sneaker.id %}?next={{ request.get_full_path|urlencode }}"
+                    >
+                        Удалить
+                    </a>
                 </div>
             </article>
         {% empty %}

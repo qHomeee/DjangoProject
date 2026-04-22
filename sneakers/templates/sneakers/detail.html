@@ -71,6 +71,17 @@
                 {% endif %}
             </div>
         {% endif %}
+        {% if sneaker.id and request.user.is_staff %}
+            <div class="admin-card-actions detail-admin-actions" aria-label="Админские действия">
+                <a class="button secondary compact" href="{% url 'sneakers:edit' sneaker.id %}">Редактировать</a>
+                <a
+                    class="button danger compact"
+                    href="{% url 'sneakers:delete' sneaker.id %}?next={{ request.get_full_path|urlencode }}"
+                >
+                    Удалить из каталога
+                </a>
+            </div>
+        {% endif %}
         <p class="description">{{ sneaker.description }}</p>
     </aside>
 </section>

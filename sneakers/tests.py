@@ -112,6 +112,34 @@ class SneakerCreateTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Sneaker.objects.filter(pk=sneaker.pk).exists())
 
+    def test_staff_user_sees_delete_action_in_catalog(self):
+        self.client.login(username="manager", password="pass12345")
+
+        response = self.client.get(reverse("sneakers:home"))
+
+        self.assertContains(response, "Удалить")
+        self.assertContains(response, reverse("sneakers:delete", kwargs={"pk": Sneaker.objects.first().pk}))
+
+    def test_regular_user_does_not_see_delete_action_in_catalog(self):
+        self.client.login(username="buyer", password="pass12345")
+
+        response = self.client.get(reverse("sneakers:home"))
+
+        self.assertNotContains(response, "Админские действия")
+        self.assertNotContains(response, "Удалить")
+
+    def test_delete_redirects_to_safe_next_url(self):
+        sneaker = Sneaker.objects.first()
+        self.client.login(username="manager", password="pass12345")
+
+        response = self.client.post(
+            reverse("sneakers:delete", kwargs={"pk": sneaker.pk}),
+            data={"next": "/#catalog"},
+        )
+
+        self.assertRedirects(response, "/#catalog", fetch_redirect_response=False)
+        self.assertFalse(Sneaker.objects.filter(pk=sneaker.pk).exists())
+
 
 class AccountShoppingTests(TestCase):
     def setUp(self):

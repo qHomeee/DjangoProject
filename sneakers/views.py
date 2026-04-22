@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.templatetags.static import static
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .catalog import SAMPLE_SNEAKERS
@@ -201,14 +202,22 @@ def sneaker_update(request, pk):
 def sneaker_delete(request, pk):
     _require_manager(request.user)
     sneaker = get_object_or_404(Sneaker, pk=pk)
+    next_url = _safe_next_url(request)
 
     if request.method == "POST":
         sneaker_name = f"{sneaker.brand} {sneaker.name}"
         sneaker.delete()
         messages.success(request, f"{sneaker_name} удалены из каталога.")
-        return redirect("sneakers:manage_sneakers")
+        return redirect(next_url or "sneakers:manage_sneakers")
 
-    return render(request, "sneakers/sneaker_confirm_delete.html", {"sneaker": sneaker})
+    return render(
+        request,
+        "sneakers/sneaker_confirm_delete.html",
+        {
+            "sneaker": sneaker,
+            "next_url": next_url,
+        },
+    )
 
 
 def _favorite_ids(request):
@@ -217,6 +226,19 @@ def _favorite_ids(request):
     return set(
         Favorite.objects.filter(user=request.user).values_list("sneaker_id", flat=True)
     )
+
+
+def _safe_next_url(request):
+    next_url = request.POST.get("next") or request.GET.get("next")
+    if not next_url:
+        return ""
+    if url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return ""
 
 
 @login_required

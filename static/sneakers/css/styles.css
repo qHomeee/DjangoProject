@@ -346,6 +346,19 @@ p {
     margin: 16px 0;
 }
 
+.admin-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding-top: 12px;
+    border-top: 1px solid #eaecf0;
+}
+
+.detail-admin-actions {
+    margin-top: 18px;
+}
+
 .product-actions form,
 .detail-actions form,
 .item-actions form {

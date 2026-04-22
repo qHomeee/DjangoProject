@@ -13,8 +13,11 @@
 
         <form class="site-form" method="post">
             {% csrf_token %}
+            {% if next_url %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+            {% endif %}
             <button class="button danger wide" type="submit">Удалить</button>
-            <a class="button secondary wide" href="{% url 'sneakers:manage_sneakers' %}">Отмена</a>
+            <a class="button secondary wide" href="{% if next_url %}{{ next_url }}{% else %}{% url 'sneakers:manage_sneakers' %}{% endif %}">Отмена</a>
         </form>
     </div>
 </section>
